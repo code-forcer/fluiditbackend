@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>DevGuide | Fluidit Backend Engine</title>
+  <link rel="icon" href="https://fluidit.com/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-blue: #00aaff;
+        --secondary-blue: #0088cc;
+        --dark-bg: #0a0a0a;
+        --terminal-bg: rgba(15, 20, 25, 0.95);
+        --text-primary: #ffffff;
+        --text-secondary: #b0b0b0;
+        --accent-glow: #00aaff44;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 20% 50%, rgba(0, 170, 255, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(0, 170, 255, 0.05) 0%, transparent 50%),
+          linear-gradient(135deg, var(--dark-bg) 0%, #111111 100%);
+        color: var(--primary-blue);
+        font-family: 'Fira Code', 'JetBrains Mono', monospace;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Animated background particles */
+      .bg-particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: var(--primary-blue);
+        border-radius: 50%;
+        opacity: 0.3;
+        animation: float 20s infinite linear;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(100vh) translateX(0px);
+          opacity: 0;
+        }
+
+        10% {
+          opacity: 0.3;
+        }
+
+        90% {
+          opacity: 0.3;
+        }
+
+        100% {
+          transform: translateY(-10vh) translateX(50px);
+          opacity: 0;
+        }
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        padding: 2rem 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: slideDown 1s ease-out;
+      }
+
+      .terminal-prompt {
+        font-size: clamp(0.5rem, 4vw, 1.5rem);
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-shadow: 0 0 20px var(--accent-glow);
+      }
+
+      .typing-cursor {
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+
+        0%,
+        50% {
+          opacity: 1;
+        }
+
+        51%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        opacity: 0;
+        animation: fadeIn 1s ease-out 0.5s forwards;
+      }
+
+      .main-terminal {
+        background: var(--terminal-bg);
+        border-radius: 15px;
+        border: 1px solid rgba(0, 170, 255, 0.2);
+        box-shadow:
+          0 0 50px rgba(0, 170, 255, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        animation: slideUp 1s ease-out 0.3s both;
+      }
+
+      .terminal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(0, 170, 255, 0.2);
+      }
+
+      .terminal-dots {
+        display: flex;
+        gap: 8px;
+        margin-right: 1rem;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      .dot:nth-child(1) {
+        background: #ff5f5a;
+      }
+
+      .dot:nth-child(2) {
+        background: #ffbd2e;
+      }
+
+      .dot:nth-child(3) {
+        background: var(--primary-blue);
+      }
+
+      @keyframes pulse {
+
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+
+        50% {
+          transform: scale(1.1);
+          opacity: 1;
+        }
+      }
+
+      .terminal-title {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .content-section {
+        margin-bottom: 2rem;
+        opacity: 0;
+        transform: translateX(-20px);
+        animation: slideInLeft 0.8s ease-out forwards;
+      }
+
+      .content-section:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .content-section:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+
+      .content-section:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+
+      .content-section:nth-child(5) {
+        animation-delay: 0.4s;
+      }
+
+      .content-section:nth-child(6) {
+        animation-delay: 0.5s;
+      }
+
+      .content-section:nth-child(7) {
+        animation-delay: 0.6s;
+      }
+
+      .section-title {
+        color: var(--primary-blue);
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.8rem;
+        position: relative;
+        display: inline-block;
+      }
+
+      .section-title::before {
+        content: '// ';
+        color: var(--text-secondary);
+        font-weight: 400;
+      }
+
+      .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-blue), var(--secondary-blue));
+        transition: width 0.3s ease;
+      }
+
+      .section-title:hover::after {
+        width: 100%;
+      }
+
+      .section-content {
+        color: var(--text-primary);
+        line-height: 1.6;
+        font-size: 1rem;
+        margin-left: 1rem;
+      }
+
+      .quote {
+        font-style: italic;
+        color: var(--text-secondary);
+        border-left: 3px solid var(--primary-blue);
+        padding-left: 1rem;
+        margin: 0.5rem 0;
+        background: rgba(0, 170, 255, 0.05);
+        padding: 1rem 1rem 1rem 2rem;
+        border-radius: 0 8px 8px 0;
+      }
+
+      ul {
+        list-style: none;
+        margin: 0.5rem 0;
+      }
+
+      li {
+        color: var(--text-primary);
+        margin: 0.5rem 0;
+        position: relative;
+        padding-left: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      li::before {
+        content: '▸';
+        color: var(--primary-blue);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      li:hover {
+        color: var(--primary-blue);
+        transform: translateX(5px);
+      }
+
+      li:hover::before {
+        content: '▶';
+        transform: scale(1.2);
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .status-item {
+        background: rgba(0, 170, 255, 0.1);
+        border: 1px solid rgba(0, 170, 255, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .status-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 170, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+      }
+
+      .status-item:hover::before {
+        left: 100%;
+      }
+
+      .status-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 170, 255, 0.2);
+      }
+
+      .status-emoji {
+        font-size: 1.5rem;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      .blessing {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(0, 170, 255, 0.05));
+        border-radius: 10px;
+        border: 1px solid rgba(0, 170, 255, 0.2);
+        text-align: center;
+        font-style: italic;
+        color: #bae6ff;
+        position: relative;
+      }
+
+      .blessing::before {
+        content: '✨';
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--terminal-bg);
+        padding: 0 10px;
+        font-size: 1.2rem;
+        animation: sparkle 2s infinite;
+      }
+
+      @keyframes sparkle {
+
+        0%,
+        100% {
+          transform: translateX(-50%) scale(1);
+        }
+
+        50% {
+          transform: translateX(-50%) scale(1.2);
+        }
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 2rem;
+        opacity: 0;
+        animation: fadeIn 1s ease-out 1s forwards;
+      }
+
+      .footer a {
+        color: var(--primary-blue);
+        text-decoration: none;
+        padding: 0.8rem 2rem;
+        border: 2px solid var(--primary-blue);
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        display: inline-block;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .footer a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-blue);
+        transition: left 0.3s ease;
+        z-index: -1;
+      }
+
+      .footer a:hover::before {
+        left: 0;
+      }
+
+      .footer a:hover {
+        color: var(--dark-bg);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 170, 255, 0.3);
+      }
+
+      /* Animations */
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .main-terminal {
+          padding: 1.5rem;
+          margin: 1rem 0;
+        }
+
+        .status-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .section-content {
+          margin-left: 0.5rem;
+        }
+      }
+
+      /* Hover effects for the entire terminal */
+      .main-terminal:hover {
+        box-shadow:
+          0 0 80px rgba(0, 170, 255, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border-color: rgba(0, 170, 255, 0.4);
+      }
+    </style>
+  </head>
+
+<body>
+  <div class="bg-particles"></div>
+
+  <div class="container">
+    <header class="header">
+      <h3 class="terminal-prompt">
+          <i class="fas fa-terminal" aria-hidden="true"></i> FluiditBackend:~$ <span class="typing-cursor">|</span>
+      </h3>
+      <p class="subtitle">Building the future of seamless transportation payments</p>
+    </header>
+
+    <main class="main-terminal">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div class="terminal-title">
+          fluidit-backend-engine v1.0.0</div>
+      </div>
+
+      <section class="content-section">
+        <h2 class="section-title">
+          <i class="fas fa-terminal" aria-hidden="true"></i> vision</h2>
+        <div class="section-content">
+          <div class="quote">
+            "We dream of a seamless, smart transportation payment future — powered by code, not queues."
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2 class="section-title"> 
+        <i class="fas fa-terminal" aria-hidden="true"></i> mission</h2>
+        <div class="section-content">
+          <div class="quote">
+            "To remove the friction from intra-city payments through a unified digital transport wallet."
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2 class="section-title">
+          <i class="fas fa-terminal" aria-hidden="true"></i> problem</h2>
+        <div class="section-content">
+          <ul>
+            <li>Disconnected payment systems across buses, taxis, keke, and bike transport</li>
+            <li>Riders carrying cash or dealing with unreliable USSD/pay apps</li>
+            <li>Operators not having a fair, real-time digital collection method</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2 class="section-title">
+          <i class="fas fa-terminal" aria-hidden="true"></i> solution</h2>
+        <div class="section-content">
+          <ul>
+            <li>Onboarding users & drivers with seamless registration</li>
+            <li>Creating secure digital wallets with blockchain-ready architecture</li>
+            <li>Enabling in-app top-ups, transfers, and real-time deductions</li>
+            <li>Simulating comprehensive transaction flows with advanced analytics</li>
+            <li>Scaling into full fintech integration with payment gateway APIs</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2 class="section-title">
+          <i class="fas fa-terminal" aria-hidden="true"></i> architecture</h2>
+        <div class="section-content">
+          <ul>
+            <li>Node.js + Express.js backend with JavaScript</li>
+            <li>MongoDB with optimized indexing and aggregation pipelines</li>
+            <li>Redis for session management and caching layer</li>
+            <li>JWT authentication with refresh token rotation</li>
+            <li>WebSocket integration for real-time transaction updates</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2 class="section-title">
+          <i class="fas fa-terminal" aria-hidden="true"></i> current_status</h2>
+        <div class="section-content">
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="status-emoji">✅</span>
+              <div>Frontend Complete</div>
+            </div>
+            <div class="status-item">
+              <span class="status-emoji">🛠️</span>
+              <div>Backend Engine Active</div>
+            </div>
+            <div class="status-item">
+              <span class="status-emoji">🧠</span>
+              <div>MongoDB Modeling</div>
+            </div>
+            <div class="status-item">
+              <span class="status-emoji">🚀</span>
+              <div>API Development</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="blessing">
+        <strong>// blessing:</strong><br>
+        May the Lord bless us with clarity, creativity & clean commits.
+      </div>
+    </main>
+
+    <footer class="footer">
+      <a href="https://fluidit.com" target="_blank" rel="noopener">
+        Launch Website →
+      </a>
+      <div style="margin-top:1rem; color:#b0b0b0; font-size:0.95rem;">
+        <span style="font-family: 'Fira Code', 'JetBrains Mono', monospace;">
+          <i class="fas fa-terminal" aria-hidden="true"></i>
+          &nbsp;engine footnote: codeforcer AppDev Engineer @ Fluidit
+        </span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Create floating particles
+    function createParticles() {
+      const particlesContainer = document.querySelector('.bg-particles');
+      const particleCount = 50;
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Typing effect for the cursor
+    function startTypingEffect() {
+      const cursor = document.querySelector('.typing-cursor');
+      setInterval(() => {
+        cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
+      }, 1000);
+    }
+
+    // Initialize effects
+    document.addEventListener('DOMContentLoaded', () => {
+      createParticles();
+      startTypingEffect();
+
+      // Add smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+          });
+        });
+      });
+    });
+
+    // Add interactive terminal effects
+    document.querySelector('.main-terminal').addEventListener('mousemove', (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      e.currentTarget.style.background = `
+        radial-gradient(circle at ${x}px ${y}px, rgba(0, 25, 136, 0.1) 0%, transparent 50%),
+        rgba(15, 20, 25, 0.95)
+      `;
+    });
+
+    document.querySelector('.main-terminal').addEventListener('mouseleave', (e) => {
+      e.currentTarget.style.background = 'rgba(15, 20, 25, 0.95)';
+    });
+  </script>
+</body>
+
+</html>
